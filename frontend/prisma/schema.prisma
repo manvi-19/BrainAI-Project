@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  name      String
+  role      String     @default("patient") // "patient" or "doctor"
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Relations
+  analyses  Analysis[]
+  uploads   MriUpload[]
+
+  @@index([email])
+}
+
+model MriUpload {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  fileName  String
+  fileData  Bytes      // Binary data of the MRI image
+  mimeType  String     @default("image/jpeg")
+  uploadedAt DateTime  @default(now())
+  
+  // Relation to analysis
+  analysis  Analysis?
+
+  @@index([userId])
+  @@index([uploadedAt])
+}
+
+model Analysis {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  uploadId  String     @unique
+  upload    MriUpload  @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  
+  tumorType String
+  confidence Float
+  description String @db.Text
+  preventiveMeasures Json  // Store as JSON array
+  
+  analyzedAt DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([analyzedAt])
+}
