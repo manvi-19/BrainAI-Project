@@ -23,7 +23,7 @@ MODEL_PATH = "model/brain_tumor_model.h5"
 # LOAD FULL TRAINED MODEL
 # ===============================
 
-model = tf.keras.models.load_model(MODEL_PATH)
+model = tf.keras.models.load_model(MODEL_PATH, compile=False)
 print("✅ Full model loaded successfully")
 
 # ===============================
