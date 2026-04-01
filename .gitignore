@@ -28,7 +28,7 @@ __pycache__/
 *.pyd
 
 # Ignore model formats you DON'T want
-*.keras
+#*.keras
 
 # =========================
 # Secrets

@@ -17,14 +17,14 @@ NUM_CLASSES = 4
 CLASS_LABELS = ["glioma", "meningioma", "notumor", "pituitary"]  # verify once
 IMAGE_SIZE = (224, 224)
 
-MODEL_PATH = "model/brain_tumor_model.h5"
+MODEL_PATH = "model/brain_tumor_model.keras"
 
 # ===============================
-# LOAD FULL TRAINED MODEL
+# LOAD FIXED TRAINED MODEL
 # ===============================
 
 model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-print("✅ Full model loaded successfully")
+print("✅ Fixed model loaded successfully")
 
 # ===============================
 # PREDICTION ROUTE
@@ -38,23 +38,17 @@ def predict():
     file = request.files["file"]
 
     try:
-        # Load image
         img = Image.open(io.BytesIO(file.read())).convert("RGB")
         img = img.resize(IMAGE_SIZE, Image.Resampling.BILINEAR)
 
-        # Convert to array
         img_array = np.array(img, dtype=np.float32)
         img_array = np.expand_dims(img_array, axis=0)
-
-        # Normalize (IMPORTANT: must match training)
         img_array = img_array / 255.0
 
-        # Prediction
         predictions = model.predict(img_array)
         predicted_index = int(np.argmax(predictions[0]))
         confidence = float(predictions[0][predicted_index]) * 100
 
-        # Debug logs (optional but useful)
         print("Raw predictions:", predictions[0])
         print("Predicted index:", predicted_index)
         print("Predicted class:", CLASS_LABELS[predicted_index])
@@ -71,10 +65,6 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-# ===============================
-# RUN SERVER
-# ===============================
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
