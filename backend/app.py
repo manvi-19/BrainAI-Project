@@ -4,6 +4,8 @@ import numpy as np
 import io
 from PIL import Image
 import tensorflow as tf
+from tensorflow.keras.applications import VGG16
+from tensorflow.keras import layers, models
 import os
 
 app = Flask(__name__)
@@ -17,14 +19,34 @@ NUM_CLASSES = 4
 CLASS_LABELS = ["glioma", "meningioma", "notumor", "pituitary"]  # verify once
 IMAGE_SIZE = (224, 224)
 
-MODEL_PATH = "model/brain_tumor_model.keras"
+WEIGHTS_PATH = "model/brain_tumor_weights.weights.h5"
 
 # ===============================
-# LOAD FIXED TRAINED MODEL
+# REBUILD EXACT TRAINING ARCHITECTURE
 # ===============================
 
-model = tf.keras.models.load_model(MODEL_PATH, compile=False)
-print("✅ Fixed model loaded successfully")
+base = VGG16(
+    weights="imagenet",
+    include_top=False,
+    input_shape=(224, 224, 3)
+)
+base.trainable = False
+
+model = models.Sequential([
+    layers.Input(shape=(224, 224, 3)),
+    base,
+    layers.Flatten(),
+    layers.Dense(256, activation="relu"),
+    layers.Dropout(0.5),
+    layers.Dense(NUM_CLASSES, activation="softmax")
+])
+
+# Build once before loading weights
+model.build((None, 224, 224, 3))
+
+# Load ONLY weights
+model.load_weights(WEIGHTS_PATH)
+print("✅ Weights loaded successfully")
 
 # ===============================
 # PREDICTION ROUTE
@@ -43,6 +65,8 @@ def predict():
 
         img_array = np.array(img, dtype=np.float32)
         img_array = np.expand_dims(img_array, axis=0)
+
+        # Must match training preprocessing
         img_array = img_array / 255.0
 
         predictions = model.predict(img_array)
@@ -65,6 +89,9 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# ===============================
+# RUN SERVER
+# ===============================
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
