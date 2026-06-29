@@ -26,10 +26,11 @@ WEIGHTS_PATH = "model/brain_tumor_weights.weights.h5"
 # ===============================
 
 base = VGG16(
-    weights="imagenet",
+    weights=None,
     include_top=False,
-    input_shape=(224, 224, 3)
+    input_shape=(224,224,3)
 )
+base.load_weights("model/vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5")
 base.trainable = False
 
 model = models.Sequential([
